@@ -1,0 +1,17 @@
+-- Mock video data for local development
+-- Uses public sample MP4s that are confirmed accessible
+-- triggered_at spread across the last ~22 hours
+
+INSERT IGNORE INTO videos (id, camera_id, r2_key, thumbnail_key, duration_s, size_bytes, triggered_at, expires_at) VALUES
+('a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4', 'cam1', 'https://media.w3.org/2010/05/bunny/movie.mp4',                                          NULL, 15, 5242880,  DATE_SUB(NOW(), INTERVAL 23 MINUTE),   DATE_ADD(DATE_SUB(NOW(), INTERVAL 23 MINUTE),   INTERVAL 24 HOUR)),
+('b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5', 'cam2', 'https://media.w3.org/2010/05/sintel/trailer.mp4',                                        NULL, 22, 8388608,  DATE_SUB(NOW(), INTERVAL 87 MINUTE),   DATE_ADD(DATE_SUB(NOW(), INTERVAL 87 MINUTE),   INTERVAL 24 HOUR)),
+('c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6', 'cam1', 'https://download.blender.org/peach/bigbuckbunny_movies/BigBuckBunny_320x180.mp4',         NULL, 28, 10485760, DATE_SUB(NOW(), INTERVAL 152 MINUTE),  DATE_ADD(DATE_SUB(NOW(), INTERVAL 152 MINUTE),  INTERVAL 24 HOUR)),
+('d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1', 'cam3', 'https://media.w3.org/2010/05/bunny/movie.mp4',                                          NULL, 18, 7340032,  DATE_SUB(NOW(), INTERVAL 210 MINUTE),  DATE_ADD(DATE_SUB(NOW(), INTERVAL 210 MINUTE),  INTERVAL 24 HOUR)),
+('e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2', 'cam2', 'https://media.w3.org/2010/05/sintel/trailer.mp4',                                        NULL, 30, 11534336, DATE_SUB(NOW(), INTERVAL 275 MINUTE),  DATE_ADD(DATE_SUB(NOW(), INTERVAL 275 MINUTE),  INTERVAL 24 HOUR)),
+('f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3', 'cam1', 'https://download.blender.org/peach/bigbuckbunny_movies/BigBuckBunny_320x180.mp4',         NULL, 12, 4194304,  DATE_SUB(NOW(), INTERVAL 338 MINUTE),  DATE_ADD(DATE_SUB(NOW(), INTERVAL 338 MINUTE),  INTERVAL 24 HOUR)),
+('a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3e5', 'cam3', 'https://media.w3.org/2010/05/bunny/movie.mp4',                                          NULL, 25, 9437184,  DATE_SUB(NOW(), INTERVAL 410 MINUTE),  DATE_ADD(DATE_SUB(NOW(), INTERVAL 410 MINUTE),  INTERVAL 24 HOUR)),
+('b2c3d4e5f6a1b2c3d4e5f6a1b2c3d5f6', 'cam2', 'https://media.w3.org/2010/05/sintel/trailer.mp4',                                        NULL, 20, 8126464,  DATE_SUB(NOW(), INTERVAL 482 MINUTE),  DATE_ADD(DATE_SUB(NOW(), INTERVAL 482 MINUTE),  INTERVAL 24 HOUR)),
+('c3d4e5f6a1b2c3d4e5f6a1b2c3d4f6a1', 'cam1', 'https://download.blender.org/peach/bigbuckbunny_movies/BigBuckBunny_320x180.mp4',         NULL, 27, 10223616, DATE_SUB(NOW(), INTERVAL 553 MINUTE),  DATE_ADD(DATE_SUB(NOW(), INTERVAL 553 MINUTE),  INTERVAL 24 HOUR)),
+('d4e5f6a1b2c3d4e5f6a1b2c3d4e5a1b2', 'cam3', 'https://media.w3.org/2010/05/bunny/movie.mp4',                                          NULL, 16, 6291456,  DATE_SUB(NOW(), INTERVAL 620 MINUTE),  DATE_ADD(DATE_SUB(NOW(), INTERVAL 620 MINUTE),  INTERVAL 24 HOUR)),
+('e5f6a1b2c3d4e5f6a1b2c3d4e5f6b2c3', 'cam2', 'https://media.w3.org/2010/05/sintel/trailer.mp4',                                        NULL, 29, 11010048, DATE_SUB(NOW(), INTERVAL 755 MINUTE),  DATE_ADD(DATE_SUB(NOW(), INTERVAL 755 MINUTE),  INTERVAL 24 HOUR)),
+('f6a1b2c3d4e5f6a1b2c3d4e5f6a1c3d4', 'cam1', 'https://download.blender.org/peach/bigbuckbunny_movies/BigBuckBunny_320x180.mp4',         NULL, 23, 8650752,  DATE_SUB(NOW(), INTERVAL 1320 MINUTE), DATE_ADD(DATE_SUB(NOW(), INTERVAL 1320 MINUTE), INTERVAL 24 HOUR));

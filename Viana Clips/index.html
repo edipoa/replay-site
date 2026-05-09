@@ -1,0 +1,670 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Viana Clips — Society Viana</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <style>
+    :root {
+      --navy: #0E2A5E;
+      --navy-deep: #07153A;
+      --navy-soft: #1B3D7A;
+      --gold: #E8B842;
+      --gold-deep: #C8961E;
+      --paper: #F7F4ED;
+      --paper-warm: #EFEADC;
+      --ink: #0B132B;
+      --muted: #5B6478;
+      --line: #1f2a48;
+      --accent: var(--gold);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: 'Archivo', system-ui, sans-serif;
+      background: var(--paper);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    .display { font-family: 'Archivo Black', 'Archivo', sans-serif; letter-spacing: -0.01em; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+
+    /* ===== TOP BAR ===== */
+    .topbar {
+      background: var(--navy);
+      color: var(--paper);
+      border-bottom: 4px solid var(--gold);
+    }
+    .topbar-inner {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 18px 32px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+      color: inherit;
+    }
+    .brand-logo {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: white;
+      border: 2px solid var(--gold);
+      flex-shrink: 0;
+    }
+    .brand-text { line-height: 1; }
+    .brand-name {
+      font-family: 'Archivo Black', sans-serif;
+      font-size: 22px;
+      letter-spacing: 0.02em;
+    }
+    .brand-name .accent { color: var(--gold); }
+    .brand-sub {
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(247,244,237,0.6);
+      margin-top: 6px;
+    }
+    .topbar-spacer { flex: 1; }
+    .live-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+    .live-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #FF3B30;
+      box-shadow: 0 0 0 0 rgba(255,59,48,0.6);
+      animation: pulse 1.6s infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(255,59,48,0.5); }
+      70% { box-shadow: 0 0 0 12px rgba(255,59,48,0); }
+      100% { box-shadow: 0 0 0 0 rgba(255,59,48,0); }
+    }
+    .top-contact {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: rgba(247,244,237,0.7);
+    }
+
+    /* ===== HERO STRIP ===== */
+    .hero {
+      background: var(--navy);
+      color: var(--paper);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 80% 50%, rgba(232,184,66,0.08), transparent 60%),
+        repeating-linear-gradient(90deg, transparent 0 60px, rgba(255,255,255,0.025) 60px 61px);
+      pointer-events: none;
+    }
+    .hero-inner {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 56px 32px 72px;
+      position: relative;
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 48px;
+      align-items: end;
+    }
+    .hero-eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 24px;
+    }
+    .hero-eyebrow .bar {
+      width: 32px; height: 2px; background: var(--gold);
+    }
+    .hero h1 {
+      font-family: 'Archivo Black', sans-serif;
+      font-size: clamp(56px, 8vw, 120px);
+      line-height: 0.88;
+      margin: 0;
+      letter-spacing: -0.025em;
+      text-transform: uppercase;
+    }
+    .hero h1 .gold { color: var(--gold); }
+    .hero h1 .outline {
+      -webkit-text-stroke: 2px var(--paper);
+      color: transparent;
+    }
+    .hero-side {
+      align-self: stretch;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      gap: 14px;
+    }
+    .hero-tag {
+      font-size: 13px;
+      line-height: 1.5;
+      color: rgba(247,244,237,0.78);
+      max-width: 380px;
+    }
+    .hero-tag strong { color: var(--paper); font-weight: 700; }
+    .hero-warn {
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      background: rgba(232,184,66,0.1);
+      border: 1px solid rgba(232,184,66,0.3);
+      border-radius: 10px;
+      color: rgba(247,244,237,0.9);
+      font-size: 12px;
+      line-height: 1.4;
+      max-width: 380px;
+    }
+    .hero-warn svg { width: 20px; height: 20px; color: var(--gold); flex-shrink: 0; }
+    .hero-warn strong { color: var(--gold); font-weight: 700; }
+
+    /* ===== CONTROLS ===== */
+    .controls-wrap {
+      background: var(--paper);
+      border-bottom: 1px solid rgba(11,19,43,0.08);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .controls {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 18px 32px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    .ctrl-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .ctrl-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-right: 4px;
+    }
+    .seg {
+      display: inline-flex;
+      background: white;
+      border: 1px solid rgba(11,19,43,0.12);
+      border-radius: 999px;
+      padding: 4px;
+    }
+    .seg button {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      padding: 8px 16px;
+      font-family: 'Archivo', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink);
+      border-radius: 999px;
+      cursor: pointer;
+      letter-spacing: 0.02em;
+      transition: all 0.15s;
+    }
+    .seg button:hover { background: rgba(11,19,43,0.04); }
+    .seg button.active {
+      background: var(--navy);
+      color: var(--paper);
+    }
+    .date-input, .select-input {
+      appearance: none;
+      border: 1px solid rgba(11,19,43,0.14);
+      background: white;
+      padding: 9px 14px;
+      border-radius: 8px;
+      font-family: 'Archivo', sans-serif;
+      font-size: 13px;
+      color: var(--ink);
+      cursor: pointer;
+    }
+    .date-input:focus, .select-input:focus {
+      outline: 2px solid var(--gold);
+      outline-offset: -1px;
+    }
+    /* ===== GRID ===== */
+    .main-wrap {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 40px 32px 80px;
+    }
+
+    /* GRID layout */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 28px 24px;
+    }
+    @media (max-width: 1100px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 800px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 520px) { .grid { grid-template-columns: 1fr; } }
+
+    /* EDITORIAL layout */
+    body[data-layout="editorial"] .grid {
+      grid-template-columns: repeat(6, 1fr);
+      grid-auto-flow: dense;
+    }
+    body[data-layout="editorial"] .clip { grid-column: span 2; }
+    body[data-layout="editorial"] .clip:nth-child(12n+1) { grid-column: span 4; grid-row: span 2; }
+    body[data-layout="editorial"] .clip:nth-child(12n+1) .thumb { aspect-ratio: 16/10; }
+    body[data-layout="editorial"] .clip:nth-child(12n+1) .clip-title { font-size: 28px; }
+    body[data-layout="editorial"] .clip:nth-child(12n+8) { grid-column: span 3; }
+    body[data-layout="editorial"] .clip:nth-child(12n+9) { grid-column: span 3; }
+    @media (max-width: 1100px) {
+      body[data-layout="editorial"] .grid { grid-template-columns: repeat(4, 1fr); }
+      body[data-layout="editorial"] .clip { grid-column: span 2; }
+      body[data-layout="editorial"] .clip:nth-child(12n+1) { grid-column: span 4; grid-row: span 1; }
+      body[data-layout="editorial"] .clip:nth-child(12n+8),
+      body[data-layout="editorial"] .clip:nth-child(12n+9) { grid-column: span 2; }
+    }
+
+    /* LIST layout */
+    body[data-layout="list"] .grid {
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+    body[data-layout="list"] .clip {
+      display: grid;
+      grid-template-columns: 240px 1fr auto;
+      gap: 24px;
+      align-items: center;
+      padding: 14px;
+      background: white;
+      border: 1px solid rgba(11,19,43,0.08);
+      border-radius: 14px;
+    }
+    body[data-layout="list"] .clip:hover { transform: none; box-shadow: 0 4px 16px rgba(11,19,43,0.06); }
+    body[data-layout="list"] .clip .thumb-wrap { width: 240px; }
+    body[data-layout="list"] .clip .thumb { aspect-ratio: 16/9; }
+    body[data-layout="list"] .clip .clip-title { font-size: 18px; margin-top: 0; }
+    body[data-layout="list"] .clip .clip-meta-bottom { padding: 0; }
+    body[data-layout="list"] .clip .clip-num { display: none; }
+    body[data-layout="list"] .clip .play-btn-watch {
+      align-self: center;
+      padding: 12px 22px;
+    }
+
+    /* ===== CARD ===== */
+    .clip {
+      background: var(--paper);
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      transition: transform 0.25s cubic-bezier(.2,.8,.2,1), box-shadow 0.25s;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .clip:hover { transform: translateY(-4px); }
+    .clip:hover .thumb-overlay { opacity: 1; }
+    .clip:hover .play-pill { transform: scale(1); }
+
+    .thumb-wrap {
+      position: relative;
+      width: 100%;
+      overflow: hidden;
+      border-radius: 12px;
+      background: var(--navy);
+    }
+    .thumb {
+      width: 100%;
+      aspect-ratio: 16/9;
+      position: relative;
+      background-size: cover;
+      background-position: center;
+    }
+    /* synthetic thumbnails — broadcast style */
+    .thumb-grass {
+      background:
+        linear-gradient(180deg, rgba(7,21,58,0.4) 0%, rgba(7,21,58,0.0) 35%, rgba(7,21,58,0.0) 60%, rgba(7,21,58,0.5) 100%),
+        repeating-linear-gradient(90deg, #1a5e35 0 36px, #1f6c3d 36px 72px);
+    }
+    .thumb-night {
+      background:
+        radial-gradient(ellipse 70% 55% at 50% 110%, rgba(232,184,66,0.18), transparent 60%),
+        radial-gradient(ellipse 100% 60% at 50% 0%, rgba(255,255,255,0.08), transparent 70%),
+        repeating-linear-gradient(90deg, #143e22 0 36px, #1a4f2c 36px 72px);
+    }
+    .thumb-chalk::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(255,255,255,0.0) 65px, rgba(255,255,255,0.6) 66px, rgba(255,255,255,0.6) 68px, transparent 69px),
+        linear-gradient(90deg, transparent calc(50% - 1px), rgba(255,255,255,0.5) calc(50% - 1px), rgba(255,255,255,0.5) calc(50% + 1px), transparent calc(50% + 1px));
+    }
+
+    .thumb-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(7,21,58,0) 40%, rgba(7,21,58,0.85));
+      opacity: 0.75;
+      transition: opacity 0.2s;
+    }
+    .thumb-tl {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .badge {
+      background: var(--gold);
+      color: var(--navy-deep);
+      font-family: 'Archivo Black', sans-serif;
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      padding: 4px 8px;
+      border-radius: 3px;
+      text-transform: uppercase;
+    }
+    .badge.live { background: #FF3B30; color: white; }
+    .badge.ghost { background: rgba(255,255,255,0.18); color: white; backdrop-filter: blur(4px); }
+
+    .thumb-br {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background: rgba(7,21,58,0.85);
+      color: white;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 7px;
+      border-radius: 3px;
+      letter-spacing: 0.04em;
+    }
+
+    .play-pill {
+      position: absolute;
+      bottom: 14px;
+      left: 14px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--gold);
+      color: var(--navy-deep);
+      display: grid;
+      place-items: center;
+      transform: scale(0.85);
+      transition: transform 0.2s cubic-bezier(.2,1.4,.4,1);
+      box-shadow: 0 6px 20px rgba(7,21,58,0.5);
+    }
+    .play-pill svg { width: 18px; height: 18px; margin-left: 2px; }
+
+    .thumb-time {
+      position: absolute;
+      bottom: 14px;
+      right: 56px;
+      color: white;
+      font-family: 'Archivo Black', sans-serif;
+      font-size: 16px;
+      letter-spacing: 0.04em;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+    }
+
+    .clip-meta-bottom {
+      padding: 14px 4px 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .clip-num-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .clip-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+    }
+    .exp-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 3px 8px 3px 7px;
+      border-radius: 999px;
+      background: rgba(11,19,43,0.06);
+      color: var(--muted);
+      border: 1px solid rgba(11,19,43,0.06);
+    }
+    .exp-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: currentColor;
+    }
+    .exp-badge.warn {
+      background: rgba(232,184,66,0.18);
+      color: #8A6512;
+      border-color: rgba(232,184,66,0.35);
+    }
+    .exp-badge.urgent {
+      background: rgba(255,59,48,0.12);
+      color: #C62828;
+      border-color: rgba(255,59,48,0.3);
+    }
+    .exp-badge.urgent .exp-dot {
+      animation: pulse 1.6s infinite;
+      box-shadow: 0 0 0 0 rgba(198,40,40,0.5);
+    }
+    .clip-title {
+      font-family: 'Archivo Black', sans-serif;
+      font-size: 18px;
+      line-height: 1.15;
+      color: var(--ink);
+      margin: 0;
+      letter-spacing: -0.01em;
+      text-transform: uppercase;
+    }
+    .clip-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+    }
+    .clip-meta .dot {
+      width: 3px; height: 3px; border-radius: 50%; background: var(--muted);
+    }
+
+    /* ===== PAGINATION ===== */
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+      margin-top: 56px;
+    }
+    .page-btn {
+      appearance: none;
+      border: 1px solid rgba(11,19,43,0.14);
+      background: white;
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      font-family: 'Archivo', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--ink);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .page-btn:hover:not(:disabled) { border-color: var(--navy); color: var(--navy); }
+    .page-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .page-btn.active {
+      background: var(--navy);
+      border-color: var(--navy);
+      color: var(--paper);
+    }
+    .page-btn.arrow {
+      width: auto;
+      padding: 0 16px;
+    }
+
+    /* ===== EMPTY STATE ===== */
+    .empty {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--muted);
+    }
+    .empty .display { font-size: 28px; color: var(--ink); margin-bottom: 8px; }
+
+    /* ===== FOOTER ===== */
+    footer {
+      background: var(--navy-deep);
+      color: rgba(247,244,237,0.7);
+      padding: 40px 32px;
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+    }
+    footer .gold { color: var(--gold); }
+
+    /* ===== TWEAKS PANEL slot ===== */
+    #tweaks-mount { position: fixed; top: 0; right: 0; z-index: 100; pointer-events: none; }
+    #tweaks-mount > * { pointer-events: auto; }
+  </style>
+</head>
+<body data-layout="grid" data-accent="gold" data-screen-label="01 Listing">
+
+  <!-- ============ TOP BAR ============ -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="index.html" class="brand">
+        <img src="assets/logo.png" alt="Society Viana" class="brand-logo" />
+        <div class="brand-text">
+          <div class="brand-name">VIANA<span class="accent">·</span>CLIPS</div>
+          <div class="brand-sub">Society Viana · Campo Sintético</div>
+        </div>
+      </a>
+      <div class="topbar-spacer"></div>
+      <span class="top-contact">CHAPECÓ/SC · 49 8848-8080</span>
+      <span class="live-pill"><span class="live-dot"></span>CLIPES VÁLIDOS POR 24H</span>
+    </div>
+  </header>
+
+  <!-- ============ HERO ============ -->
+  <section class="hero" data-screen-label="hero">
+    <div class="hero-inner">
+      <div class="hero-main">
+        <div class="hero-eyebrow"><span class="bar"></span>Society Viana · Os lances do dia</div>
+        <h1>
+          OS LANCES<br />
+          <span class="gold">DO CAMPO.</span><br />
+          <span class="outline">NA SUA MÃO.</span>
+        </h1>
+      </div>
+      <div class="hero-side">
+        <div class="hero-tag"><strong>Cada gol, defesa e jogada</strong> filmados ao vivo no Society Viana. <strong style="color:var(--gold);">Os clipes ficam no ar por 24 horas</strong> — baixe ou compartilhe no Zap antes que expire.</div>
+        <div class="hero-warn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+          <div><strong>Janela de 24h</strong> · Após esse prazo o vídeo é removido automaticamente.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CONTROLS ============ -->
+  <div class="controls-wrap">
+    <div class="controls">
+      <div class="ctrl-group">
+        <span class="ctrl-label">Período</span>
+        <div class="seg" id="period-seg">
+          <button data-period="all" class="active">Todos (24h)</button>
+          <button data-period="12h">12h</button>
+          <button data-period="6h">6h</button>
+          <button data-period="1h">1h</button>
+        </div>
+      </div>
+      <div class="ctrl-group">
+        <span class="ctrl-label">Data</span>
+        <input type="date" class="date-input" id="date-input" />
+      </div>
+      <div class="ctrl-group">
+        <span class="ctrl-label">Ordenar</span>
+        <div class="seg" id="sort-seg">
+          <button data-sort="recent" class="active">Recentes</button>
+          <button data-sort="expiring">Expirando</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ GRID ============ -->
+  <main class="main-wrap">
+    <div class="grid" id="clip-grid"></div>
+    <div class="pagination" id="pagination"></div>
+  </main>
+
+  <footer>
+    <div>SOCIETY VIANA · CAMPO SINTÉTICO · CHAPECÓ <span class="gold">/</span> SC</div>
+    <div style="margin-top:10px; opacity:0.6;">Reservas: 49 8848-8080 · viana.clips@2026</div>
+  </footer>
+
+  <div id="tweaks-mount"></div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+  <script type="text/babel" src="tweaks-panel.jsx"></script>
+  <script type="text/babel" src="tweaks-app.jsx"></script>
+</body>
+</html>

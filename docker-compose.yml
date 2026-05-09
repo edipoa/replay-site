@@ -1,0 +1,37 @@
+services:
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: replay_secret
+      MYSQL_DATABASE: replay_dev
+      MYSQL_USER: replay
+      MYSQL_PASSWORD: replay_secret
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./backend/migrations/001_create_videos.sql:/docker-entrypoint-initdb.d/001.sql:ro
+      - ./backend/seeds/mock.sql:/docker-entrypoint-initdb.d/002.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "--silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+    ports:
+      - "3306:3306"   # acesso externo opcional (MySQL Workbench, etc.)
+
+  api:
+    build: ./backend
+    env_file: ./backend/.env
+    ports:
+      - "8000:80"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./backend:/var/www/html          # hot-reload do código
+      - vendor:/var/www/html/vendor      # vendor preservado da imagem
+
+volumes:
+  db_data:
+  vendor:
