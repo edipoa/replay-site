@@ -188,7 +188,12 @@ body {
 .date-input:focus { outline: 2px solid var(--gold); outline-offset: -1px; }
 
 /* ── Grid ──────────────────────────────────────────────────── */
+.page-layout {
+  display: flex; flex-direction: column;
+  min-height: 100vh;
+}
 .main-wrap {
+  flex: 1;
   max-width: 1440px; margin: 0 auto;
   padding: 40px 32px 80px;
 }

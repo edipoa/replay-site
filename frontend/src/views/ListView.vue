@@ -48,7 +48,7 @@ onMounted(load)
 </script>
 
 <template>
-  <div>
+  <div class="page-layout">
     <TopBar />
 
     <!-- Hero -->
