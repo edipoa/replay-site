@@ -102,7 +102,7 @@ function postVideo(): void
     }
 
     try {
-        $triggeredAt = new DateTimeImmutable($body['triggered_at']);
+        $triggeredAt = (new DateTimeImmutable($body['triggered_at']))->setTimezone(new DateTimeZone('UTC'));
     } catch (Exception) {
         jsonResponse(400, ['error' => 'Invalid triggered_at']);
         return;

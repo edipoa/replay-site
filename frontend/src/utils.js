@@ -3,7 +3,7 @@ const THUMBS  = ['thumb-grass','thumb-night','thumb-grass thumb-chalk','thumb-ni
 
 export function clockTime(iso) {
   const d = new Date(iso)
-  return `${String(d.getUTCHours()).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')}`
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
 }
 
 export function formatDuration(seconds) {
@@ -12,7 +12,7 @@ export function formatDuration(seconds) {
 
 export function shortDate(iso) {
   const d = new Date(iso)
-  return `${String(d.getUTCDate()).padStart(2,'0')} ${MONTHS[d.getUTCMonth()]}`
+  return `${String(d.getDate()).padStart(2,'0')} ${MONTHS[d.getMonth()]}`
 }
 
 export function isoDate(iso) {
