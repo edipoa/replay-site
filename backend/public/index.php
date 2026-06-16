@@ -7,13 +7,21 @@ require_once __DIR__ . '/../vendor/autoload.php';
 use Dotenv\Dotenv;
 use App\Database;
 use App\R2Client;
+use App\TokenAuth;
 
 $dotenv = Dotenv::createImmutable(__DIR__ . '/..');
 $dotenv->load();
 
+date_default_timezone_set($_ENV['TZ'] ?? 'America/Sao_Paulo');
+
+require_once __DIR__ . '/../src/handlers/auth.php';
+require_once __DIR__ . '/../src/handlers/group.php';
+require_once __DIR__ . '/../src/handlers/games.php';
+require_once __DIR__ . '/../src/handlers/admin.php';
+
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, X-Api-Key');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, X-Api-Key, Authorization');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(204);
@@ -23,21 +31,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 $method = $_SERVER['REQUEST_METHOD'];
 $uri    = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
-if ($method === 'POST' && $uri === '/api/videos') {
-    postVideo();
-} elseif ($method === 'GET' && $uri === '/api/videos') {
-    getVideos();
-} elseif ($method === 'GET' && preg_match('#^/api/videos/([a-f0-9]{32})$#', $uri, $m)) {
-    getVideo($m[1]);
-} elseif ($method === 'GET' && preg_match('#^/api/videos/([a-f0-9]{32})/download$#', $uri, $m)) {
-    servePresigned($m[1], 'r2_key');
-} elseif ($method === 'GET' && preg_match('#^/api/videos/([a-f0-9]{32})/thumbnail$#', $uri, $m)) {
-    servePresigned($m[1], 'thumbnail_key');
-} else {
-    jsonResponse(404, ['error' => 'Not Found']);
+// ── Auth ─────────────────────────────────────────────────────────────────────
+if ($method === 'POST' && $uri === '/api/auth/login')         { groupLogin();  exit; }
+if ($method === 'POST' && $uri === '/api/auth/logout')        { groupLogout(); exit; }
+if ($method === 'POST' && $uri === '/api/admin/login')        { adminLogin();  exit; }
+if ($method === 'POST' && $uri === '/api/admin/logout')       { adminLogout(); exit; }
+
+// ── Group ────────────────────────────────────────────────────────────────────
+if ($method === 'GET' && $uri === '/api/group/videos')        { getGroupVideos(); exit; }
+
+// ── Games ────────────────────────────────────────────────────────────────────
+if ($method === 'GET' && $uri === '/api/games/current')       { getCurrentGame(); exit; }
+
+if (preg_match('#^/api/games/([a-f0-9]{32})$#', $uri, $m)) {
+    if ($method === 'GET')  { getGame($m[1]);              exit; }
+}
+if (preg_match('#^/api/games/([a-f0-9]{32})/videos$#', $uri, $m)) {
+    if ($method === 'GET')  { getGameVideos($m[1]);        exit; }
+}
+if (preg_match('#^/api/games/([a-f0-9]{32})/pay$#', $uri, $m)) {
+    if ($method === 'POST') { initiateGamePayment($m[1]);  exit; }
 }
 
-// ── Handlers ─────────────────────────────────────────────────────────────────
+// ── Admin ────────────────────────────────────────────────────────────────────
+if ($method === 'GET'    && $uri === '/api/admin/slots')      { getAdminSlots();    exit; }
+if ($method === 'POST'   && $uri === '/api/admin/slots')      { createAdminSlot();  exit; }
+if (preg_match('#^/api/admin/slots/(\d+)$#', $uri, $m)) {
+    if ($method === 'DELETE') { deleteAdminSlot((int) $m[1]); exit; }
+}
+if ($method === 'GET'    && $uri === '/api/admin/groups')     { getAdminGroups();   exit; }
+if ($method === 'POST'   && $uri === '/api/admin/groups')     { createAdminGroup(); exit; }
+if (preg_match('#^/api/admin/groups/(\d+)$#', $uri, $m)) {
+    if ($method === 'PUT')    { updateAdminGroup((int) $m[1]); exit; }
+    if ($method === 'DELETE') { deleteAdminGroup((int) $m[1]); exit; }
+}
+if ($method === 'GET'    && $uri === '/api/admin/games')      { getAdminGames();    exit; }
+if ($method === 'GET'    && $uri === '/api/admin/stats')      { getAdminStats();    exit; }
+
+// ── Videos (existentes) ──────────────────────────────────────────────────────
+if ($method === 'POST' && $uri === '/api/videos')                                    { postVideo();          exit; }
+if ($method === 'GET'  && $uri === '/api/videos')                                    { getVideos();          exit; }
+if (preg_match('#^/api/videos/([a-f0-9]{32})$#', $uri, $m)) {
+    if ($method === 'GET') { getVideo($m[1]); exit; }
+}
+if (preg_match('#^/api/videos/([a-f0-9]{32})/download$#', $uri, $m)) {
+    if ($method === 'GET') { servePresigned($m[1], 'r2_key'); exit; }
+}
+if (preg_match('#^/api/videos/([a-f0-9]{32})/thumbnail$#', $uri, $m)) {
+    if ($method === 'GET') { servePresigned($m[1], 'thumbnail_key'); exit; }
+}
+
+jsonResponse(404, ['error' => 'Not Found']);
+
+// ── Handlers de vídeo ────────────────────────────────────────────────────────
 
 function getVideo(string $id): void
 {
@@ -51,18 +97,7 @@ function getVideo(string $id): void
     $stmt->execute([':id' => $id]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if (!$row) {
-        jsonResponse(404, ['error' => 'Not Found']);
-        return;
-    }
-
-    $row['triggered_at']  = (new DateTimeImmutable($row['triggered_at']))->format(DateTimeInterface::ATOM);
-    $row['expires_at']    = (new DateTimeImmutable($row['expires_at']))->format(DateTimeInterface::ATOM);
-    $row['seq']           = (int) $row['seq'];
-    $row['display_id']    = sprintf('VC-%03d', $row['seq']);
-    $row['duration_s']    = (int) $row['duration_s'];
-    $row['size_bytes']    = (int) $row['size_bytes'];
-    $row['has_thumbnail'] = (bool) $row['has_thumbnail'];
+    if (!$row) { jsonResponse(404, ['error' => 'Not Found']); return; }
 
     $key = $row['r2_key'];
     if (str_starts_with($key, 'http://') || str_starts_with($key, 'https://')) {
@@ -71,6 +106,14 @@ function getVideo(string $id): void
         $row['stream_url'] = (new R2Client())->presign($key, 3600);
     }
     unset($row['r2_key']);
+
+    $row['triggered_at']  = (new DateTimeImmutable($row['triggered_at']))->format(DateTimeInterface::ATOM);
+    $row['expires_at']    = (new DateTimeImmutable($row['expires_at']))->format(DateTimeInterface::ATOM);
+    $row['seq']           = (int) $row['seq'];
+    $row['display_id']    = sprintf('VC-%03d', $row['seq']);
+    $row['duration_s']    = (int) $row['duration_s'];
+    $row['size_bytes']    = (int) $row['size_bytes'];
+    $row['has_thumbnail'] = (bool) $row['has_thumbnail'];
 
     jsonResponse(200, $row);
 }
@@ -84,16 +127,10 @@ function postVideo(): void
     }
 
     $body = json_decode(file_get_contents('php://input'), true);
-    if (!is_array($body)) {
-        jsonResponse(400, ['error' => 'Invalid JSON']);
-        return;
-    }
+    if (!is_array($body)) { jsonResponse(400, ['error' => 'Invalid JSON']); return; }
 
     foreach (['id', 'camera_id', 'r2_key', 'duration_s', 'size_bytes', 'triggered_at'] as $field) {
-        if (!isset($body[$field])) {
-            jsonResponse(400, ['error' => "Missing field: $field"]);
-            return;
-        }
+        if (!isset($body[$field])) { jsonResponse(400, ['error' => "Missing field: $field"]); return; }
     }
 
     if (!preg_match('/^[a-f0-9]{32}$/', (string) $body['id'])) {
@@ -129,17 +166,12 @@ function postVideo(): void
         ':expires_at'    => $expiresAt->format('Y-m-d H:i:s'),
     ]);
 
+    // Cria o game automaticamente se este clip pertence a um slot cadastrado
+    maybeCreateGame($db, (string) $body['camera_id'], $triggeredAt);
+
     jsonResponse(201, ['ok' => true]);
 }
 
-/**
- * GET /api/videos
- *
- * Query params:
- *   period  = 24h | 12h | 6h | 1h   (default: 24h; ignored when date is set)
- *   date    = YYYY-MM-DD             (filter by calendar day in UTC)
- *   sort    = recent | expiring      (default: recent)
- */
 function getVideos(): void
 {
     $db = Database::getInstance();
@@ -147,54 +179,42 @@ function getVideos(): void
     $conditions = ['expires_at > NOW()'];
     $params     = [];
 
-    // Period / date filter
     $date = $_GET['date'] ?? '';
     if ($date !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
         $conditions[] = 'DATE(triggered_at) = :date';
         $params[':date'] = $date;
     } else {
         $periodHours = match ($_GET['period'] ?? '24h') {
-            '1h'  => 1,
-            '6h'  => 6,
-            '12h' => 12,
-            default => 24,
+            '1h'  => 1, '6h'  => 6, '12h' => 12, default => 24,
         };
-        $conditions[] = 'triggered_at >= NOW() - INTERVAL :hours HOUR';
+        $conditions[]     = 'triggered_at >= NOW() - INTERVAL :hours HOUR';
         $params[':hours'] = $periodHours;
     }
 
-    $orderBy = ($_GET['sort'] ?? 'recent') === 'expiring'
-        ? 'expires_at ASC'
-        : 'triggered_at DESC';
+    $orderBy = ($_GET['sort'] ?? 'recent') === 'expiring' ? 'expires_at ASC' : 'triggered_at DESC';
+    $where   = implode(' AND ', $conditions);
 
-    $where = implode(' AND ', $conditions);
-    $stmt  = $db->prepare(
+    $stmt = $db->prepare(
         "SELECT id, seq, camera_id, duration_s, size_bytes, triggered_at, expires_at,
                 (thumbnail_key IS NOT NULL) AS has_thumbnail
-         FROM videos
-         WHERE {$where}
-         ORDER BY {$orderBy}"
+         FROM videos WHERE {$where} ORDER BY {$orderBy}"
     );
     $stmt->execute($params);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     foreach ($rows as &$row) {
-        $row['triggered_at']   = (new DateTimeImmutable($row['triggered_at']))->format(DateTimeInterface::ATOM);
-        $row['expires_at']     = (new DateTimeImmutable($row['expires_at']))->format(DateTimeInterface::ATOM);
-        $row['seq']            = (int) $row['seq'];
-        $row['display_id']     = sprintf('VC-%03d', $row['seq']);
-        $row['duration_s']     = (int) $row['duration_s'];
-        $row['size_bytes']     = (int) $row['size_bytes'];
-        $row['has_thumbnail']  = (bool) $row['has_thumbnail'];
+        $row['triggered_at']  = (new DateTimeImmutable($row['triggered_at']))->format(DateTimeInterface::ATOM);
+        $row['expires_at']    = (new DateTimeImmutable($row['expires_at']))->format(DateTimeInterface::ATOM);
+        $row['seq']           = (int) $row['seq'];
+        $row['display_id']    = sprintf('VC-%03d', $row['seq']);
+        $row['duration_s']    = (int) $row['duration_s'];
+        $row['size_bytes']    = (int) $row['size_bytes'];
+        $row['has_thumbnail'] = (bool) $row['has_thumbnail'];
     }
 
     jsonResponse(200, $rows);
 }
 
-/**
- * GET /api/videos/{id}/download   → presign r2_key
- * GET /api/videos/{id}/thumbnail  → presign thumbnail_key
- */
 function servePresigned(string $id, string $column): void
 {
     $db   = Database::getInstance();
@@ -204,29 +224,21 @@ function servePresigned(string $id, string $column): void
     $stmt->execute([':id' => $id]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if (!$row || $row[$column] === null) {
-        jsonResponse(404, ['error' => 'Not Found']);
-        return;
-    }
+    if (!$row || $row[$column] === null) { jsonResponse(404, ['error' => 'Not Found']); return; }
 
     $key = $row[$column];
-
-    // Mock / direct URL — bypass R2 presigning
     if (str_starts_with($key, 'http://') || str_starts_with($key, 'https://')) {
         header('Location: ' . $key, true, 302);
         exit;
     }
 
-    $disposition = $column === 'r2_key'
-        ? 'attachment; filename="' . basename($key) . '"'
-        : '';
+    $disposition = $column === 'r2_key' ? 'attachment; filename="' . basename($key) . '"' : '';
     $url = (new R2Client())->presign($key, 3600, $disposition);
-
     header('Location: ' . $url, true, 302);
     exit;
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Helper global ─────────────────────────────────────────────────────────────
 
 function jsonResponse(int $code, mixed $data): void
 {
