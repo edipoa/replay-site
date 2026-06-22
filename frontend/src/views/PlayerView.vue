@@ -3,31 +3,42 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 import TopBar from '../components/TopBar.vue'
 import AppFooter from '../components/AppFooter.vue'
-import { fetchVideo, fetchVideos, downloadUrl } from '../api.js'
-import { clockTime, formatDuration, shortDate, isoDate, relativeTime, timeRemaining, thumbClass } from '../utils.js'
+import { fetchVideo, fetchVideos, downloadUrl, createShareLink } from '../api.js'
+import { clockTime, formatDuration, shortDate, relativeTime, timeRemaining, thumbClass } from '../utils.js'
 
 const route  = useRoute()
 const router = useRouter()
-const id     = route.params.id
 
-const video    = ref(null)
-const related  = ref([])
-const loading  = ref(true)
-const error    = ref(null)
-const showPh   = ref(true)
-const toastMsg = ref('')
-const toastOn  = ref(false)
-const videoEl  = ref(null)
+const id         = route.params.id
+const videoToken = localStorage.getItem(`video_token_${id}`) || null
+
+const video      = ref(null)
+const related    = ref([])
+const loading    = ref(true)
+const error      = ref(null)
+const showPh     = ref(true)
+const toastMsg   = ref('')
+const toastOn    = ref(false)
+const videoEl    = ref(null)
+const sharing    = ref(false)
 
 const rem = computed(() => video.value ? timeRemaining(video.value.expires_at) : null)
 
+function hasToken(videoId) { return !!localStorage.getItem(`video_token_${videoId}`) }
+
 async function load() {
+  if (!videoToken) {
+    error.value = 'UNAUTHORIZED'
+    loading.value = false
+    return
+  }
   try {
-    video.value = await fetchVideo(id)
-    const date = isoDate(video.value.triggered_at)
+    video.value = await fetchVideo(id, videoToken)
     const all  = await fetchVideos({ period: '24h', sort: 'recent' })
-    const same = all.filter(v => v.id !== id && isoDate(v.triggered_at) === date)
-    related.value = (same.length ? same : all.filter(v => v.id !== id)).slice(0, 6)
+    const sameGame = video.value.game_id
+      ? all.filter(v => v.id !== id && v.game_id === video.value.game_id)
+      : []
+    related.value = sameGame.slice(0, 6)
   } catch (e) {
     error.value = e.message
   } finally {
@@ -43,36 +54,61 @@ function showToast(msg) {
   setTimeout(() => { toastOn.value = false }, 1800)
 }
 
-async function copyLink() {
-  try {
-    await navigator.clipboard.writeText(location.href)
-    showToast('Link copiado')
-  } catch {
-    showToast('Falha ao copiar')
+function copyToClipboard(text) {
+  if (navigator.clipboard?.writeText) {
+    return navigator.clipboard.writeText(text)
   }
+  const el = document.createElement('textarea')
+  el.value = text
+  el.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0'
+  document.body.appendChild(el)
+  el.focus()
+  el.select()
+  document.execCommand('copy')
+  document.body.removeChild(el)
+  return Promise.resolve()
 }
 
-function whatsappUrl() {
-  const text = `Olha esse lance no Campo Society Viana: ${video.value?.clip_title ?? ''} — ${location.href}`
-  return `https://wa.me/?text=${encodeURIComponent(text)}`
+async function shareClip() {
+  if (!video.value || sharing.value) return
+  sharing.value = true
+  try {
+    const gameId = video.value.game_id
+    if (!gameId) { showToast('Jogo não identificado'); return }
+    const res = await createShareLink(videoToken, gameId, id)
+    await copyToClipboard(res.url)
+    showToast('Link copiado!')
+  } catch (e) {
+    showToast('Falha ao gerar link')
+    console.error('[share]', e)
+  } finally {
+    sharing.value = false
+  }
 }
 
 onMounted(load)
 </script>
 
 <template>
-  <div>
+  <div style="min-height:100vh;display:flex;flex-direction:column;">
     <TopBar>
       <RouterLink to="/" class="back-link">← Voltar aos clipes</RouterLink>
     </TopBar>
 
     <!-- Loading -->
-    <div v-if="loading" style="max-width:1280px;margin:80px auto;text-align:center;font-family:'JetBrains Mono',monospace;color:var(--muted)">
+    <div v-if="loading" style="flex:1;max-width:1280px;margin:80px auto;text-align:center;font-family:'JetBrains Mono',monospace;color:var(--muted)">
       Carregando…
     </div>
 
+    <!-- Sem acesso -->
+    <div v-else-if="error === 'UNAUTHORIZED'" style="flex:1;max-width:560px;margin:80px auto;text-align:center;padding:0 24px">
+      <div class="display" style="font-size:28px;color:var(--ink);margin-bottom:8px">Acesso necessário</div>
+      <p style="color:var(--muted);margin-bottom:24px">Este clipe é pago. Acesse a página do jogo para comprar.</p>
+      <a href="/" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--navy);text-decoration:underline">← Ver jogos disponíveis</a>
+    </div>
+
     <!-- Error -->
-    <div v-else-if="error" style="max-width:1280px;margin:80px auto;text-align:center">
+    <div v-else-if="error" style="flex:1;max-width:1280px;margin:80px auto;text-align:center">
       <div class="display" style="font-size:28px;color:var(--ink);margin-bottom:8px">Clipe não encontrado</div>
       <div style="color:var(--muted)">{{ error }}</div>
     </div>
@@ -121,23 +157,17 @@ onMounted(load)
 
         <!-- Actions -->
         <div class="actions">
-          <a :href="downloadUrl(id)" class="btn gold-btn" download>
+          <a :href="downloadUrl(id, videoToken)" class="btn gold-btn" download>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <path d="M12 3v12m0 0l-5-5m5 5l5-5M4 21h16"/>
             </svg>
             Baixar lance
           </a>
-          <a :href="whatsappUrl()" class="btn whatsapp-btn" target="_blank" rel="noopener">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M17.6 6.3A7.85 7.85 0 0012 4a7.93 7.93 0 00-6.7 12.05L4 21l5.05-1.3A7.92 7.92 0 0019.93 12a7.85 7.85 0 00-2.32-5.7zM12 18.5a6.55 6.55 0 01-3.34-.92l-.24-.14-2.9.76.78-2.84-.16-.25A6.59 6.59 0 1112 18.5zm3.59-4.93c-.2-.1-1.16-.57-1.34-.64s-.31-.1-.44.1-.5.64-.62.77-.23.15-.43.05a5.36 5.36 0 01-1.58-.97 5.92 5.92 0 01-1.1-1.36c-.11-.2 0-.3.09-.4l.3-.34.2-.34a.37.37 0 000-.35c0-.1-.44-1.06-.6-1.45s-.32-.33-.44-.34h-.38a.72.72 0 00-.52.24 2.21 2.21 0 00-.7 1.65 3.86 3.86 0 00.81 2.05A8.83 8.83 0 0012.62 16a4.36 4.36 0 002.13.6 1.85 1.85 0 001.21-.86 1.49 1.49 0 00.1-.85c-.05-.07-.18-.13-.38-.22z"/>
-            </svg>
-            Compartilhar no Zap
-          </a>
-          <button class="btn ghost-btn" @click="copyLink">
+          <button v-if="video.game_id" class="btn ghost-btn" :disabled="sharing" @click="shareClip">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <path d="M9 5h9a2 2 0 012 2v9M5 9h9a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2v-9a2 2 0 012-2z"/>
+              <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/>
             </svg>
-            Copiar link
+            {{ sharing ? 'Gerando…' : 'Compartilhar' }}
           </button>
         </div>
 
@@ -162,20 +192,28 @@ onMounted(load)
       <aside class="player-aside">
         <div class="side-title"><span class="bar" />Mais lances do jogo</div>
         <div class="side-list">
-          <RouterLink
+          <component
+            :is="hasToken(v.id) ? 'RouterLink' : 'div'"
             v-for="v in related"
             :key="v.id"
-            :to="`/player/${v.id}`"
+            :to="hasToken(v.id) ? `/player/${v.id}` : undefined"
             class="side-clip"
+            :class="{ 'side-clip-locked': !hasToken(v.id) }"
           >
             <div class="side-thumb" :class="v.seq % 2 === 0 ? 'side-thumb-night' : 'side-thumb-grass'">
-              <div class="side-dur">{{ formatDuration(v.duration_s) }}</div>
+              <div v-if="!hasToken(v.id)" class="side-lock">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+              </div>
+              <div v-else class="side-dur">{{ formatDuration(v.duration_s) }}</div>
             </div>
             <div class="side-info">
               <div class="t">Clipe das {{ clockTime(v.triggered_at) }}</div>
-              <div class="m">{{ relativeTime(v.triggered_at) }} · {{ formatDuration(v.duration_s) }}</div>
+              <div class="m">
+                {{ relativeTime(v.triggered_at) }} · {{ formatDuration(v.duration_s) }}
+                <span v-if="!hasToken(v.id)" class="side-buy-hint">· Voltar ao jogo para comprar</span>
+              </div>
             </div>
-          </RouterLink>
+          </component>
         </div>
       </aside>
     </div>

@@ -28,6 +28,14 @@ function isActive(path) {
       </div>
 
       <nav class="adm-nav">
+        <RouterLink to="/admin/dashboard" :class="['adm-link', { active: isActive('/admin/dashboard') }]">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+          </svg>
+          Dashboard
+        </RouterLink>
+
         <RouterLink to="/admin/slots"  :class="['adm-link', { active: isActive('/admin/slots') }]">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
@@ -49,13 +57,20 @@ function isActive(path) {
           </svg>
           Jogos
         </RouterLink>
+
+        <RouterLink to="/admin/orphaned-clips" :class="['adm-link', { active: isActive('/admin/orphaned-clips') }]">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          Órfãos
+        </RouterLink>
       </nav>
 
       <button class="adm-logout" @click="logout">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
         </svg>
-        Sair
+        <span class="adm-logout-label">Sair</span>
       </button>
     </aside>
 
@@ -116,8 +131,41 @@ function isActive(path) {
 .adm-logout:hover { background: rgba(255,59,48,0.1); color: #ff6b6b; }
 
 .adm-content { flex: 1; padding: 40px; overflow-y: auto; }
+
 @media (max-width: 768px) {
   .adm-shell { flex-direction: column; }
-  .adm-sidebar { width: 100%; height: auto; position: static; flex-direction: row; flex-wrap: wrap; }
+
+  .adm-sidebar {
+    width: 100%; height: auto;
+    position: sticky; top: 0; z-index: 50;
+    flex-direction: row; align-items: center;
+    padding: 10px 14px; gap: 6px;
+  }
+  .adm-logo {
+    margin-bottom: 0; padding-bottom: 0;
+    border-bottom: 0; flex-shrink: 0;
+  }
+  .adm-logo .adm-tag { display: none; }
+  .adm-nav {
+    flex-direction: row;
+    gap: 2px;
+  }
+  .adm-link {
+    padding: 8px 10px;
+    font-size: 12px; gap: 5px;
+    border-radius: 8px;
+  }
+  .adm-link svg { width: 15px; height: 15px; }
+  .adm-logout {
+    margin-left: auto;
+    padding: 8px 10px;
+    font-size: 12px; gap: 5px;
+    width: auto; border-radius: 8px;
+    flex-shrink: 0;
+  }
+  .adm-logout svg { width: 15px; height: 15px; }
+  .adm-logout-label { display: none; }
+
+  .adm-content { padding: 20px 16px; }
 }
 </style>

@@ -41,7 +41,9 @@ const dateStr = computed(() => now.value.toLocaleDateString('pt-BR', { weekday: 
 
 function formatNextSlot(s) {
   if (!s) return ''
-  return `${WEEKDAYS[s.weekday]} às ${String(s.start_hour).padStart(2, '0')}h`
+  const h = String(s.start_hour).padStart(2, '0')
+  const m = String(s.start_minute ?? 0).padStart(2, '0')
+  return `${WEEKDAYS[s.weekday]} às ${h}:${m}`
 }
 
 onMounted(async () => {
@@ -71,7 +73,7 @@ onUnmounted(() => {
       </div>
       <div class="dp-info">
         <div class="dp-label">ESCANEIE PARA VER OS REPLAYS</div>
-        <div class="dp-slot display">{{ String(game.slot_hour).padStart(2,'0') }}:00</div>
+        <div class="dp-slot display">{{ String(game.slot_hour).padStart(2,'0') }}:{{ String(game.slot_minute ?? 0).padStart(2,'0') }}</div>
         <div class="dp-clips mono">{{ game.clip_count ?? 0 }} clipes disponíveis</div>
         <div class="dp-hint">Acesso via login do time<br />ou pagamento por jogo</div>
       </div>

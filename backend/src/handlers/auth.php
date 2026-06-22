@@ -26,18 +26,21 @@ function groupLogin(): void
         return;
     }
 
-    if (new DateTimeImmutable($group['subscription_expires_at']) <= new DateTimeImmutable()) {
-        jsonResponse(403, ['error' => 'Assinatura expirada']);
-        return;
-    }
+    $expired = new DateTimeImmutable($group['subscription_expires_at']) <= new DateTimeImmutable();
 
-    $token = TokenAuth::issueGroupToken((int) $group['id'], $group['subscription_expires_at']);
+    // Assinatura expirada: emite token de 1h só para permitir renovação
+    $utc = new DateTimeZone('UTC');
+    $tokenExpiry = $expired
+        ? (new DateTimeImmutable('now', $utc))->modify('+1 hour')->format('Y-m-d H:i:s')
+        : $group['subscription_expires_at'];
+
+    $token = TokenAuth::issueGroupToken((int) $group['id'], $tokenExpiry);
 
     jsonResponse(200, [
-        'token'      => $token,
-        'expires_at' => $group['subscription_expires_at'],
-        'group_name' => $group['name'],
-        'camera_id'  => $group['camera_id'],
+        'token'                => $token,
+        'expires_at'           => $group['subscription_expires_at'],
+        'group_name'           => $group['name'],
+        'subscription_expired' => $expired,
     ]);
 }
 

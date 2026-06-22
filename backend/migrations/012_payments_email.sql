@@ -1,0 +1,2 @@
+ALTER TABLE payments
+    ADD COLUMN IF NOT EXISTS email VARCHAR(150) NULL AFTER amount;

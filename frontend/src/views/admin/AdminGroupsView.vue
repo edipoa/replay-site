@@ -8,14 +8,15 @@ const groups  = ref([])
 const slots   = ref([])
 const loading = ref(false)
 const error   = ref('')
-const modal   = ref(null) // null | 'create' | { id, mode: 'edit' }
+const modal   = ref(null)
 const editId  = ref(null)
 
 const WEEKDAYS = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom']
 
+const today = () => new Date().toISOString().slice(0, 10)
+
 const blank = () => ({
-  name: '', camera_id: 'cam1', slot_weekday: 1, slot_hour: 20,
-  login: '', password: '', subscription_expires_at: '',
+  name: '', slot_id: '', login: '', password: '', subscription_expires_at: today(),
 })
 const form = ref(blank())
 
@@ -35,13 +36,12 @@ function openCreate() { form.value = blank(); editId.value = null; modal.value =
 
 function openEdit(g) {
   form.value = {
-    name: g.name, camera_id: g.camera_id,
-    slot_weekday: g.slot_weekday, slot_hour: g.slot_hour,
+    name: g.name, slot_id: g.slot_id,
     login: g.login, password: '',
     subscription_expires_at: g.subscription_expires_at?.slice(0, 10) ?? '',
   }
-  editId.value  = g.id
-  modal.value   = 'open'
+  editId.value = g.id
+  modal.value  = 'open'
 }
 
 async function save() {
@@ -93,32 +93,19 @@ onMounted(load)
       <div class="adm-modal">
         <h2 class="adm-modal-title display">{{ editId ? 'Editar Grupo' : 'Novo Grupo' }}</h2>
         <form @submit.prevent="save" class="adm-form">
-          <div class="adm-form-row">
-            <label>
-              <span class="field-label">Nome do time</span>
-              <input v-model="form.name" type="text" required class="adm-input" placeholder="Rachão da Terça" />
-            </label>
-            <label>
-              <span class="field-label">Câmera</span>
-              <select v-model="form.camera_id" class="adm-select">
-                <option v-for="s in [...new Set(slots.map(x=>x.camera_id))]" :key="s" :value="s">{{ s }}</option>
-                <option value="cam1">cam1</option>
-                <option value="cam2">cam2</option>
-              </select>
-            </label>
-          </div>
-          <div class="adm-form-row">
-            <label>
-              <span class="field-label">Dia do slot</span>
-              <select v-model.number="form.slot_weekday" class="adm-select">
-                <option v-for="(d, i) in WEEKDAYS" :key="i" :value="i">{{ d }}</option>
-              </select>
-            </label>
-            <label>
-              <span class="field-label">Hora do slot</span>
-              <input v-model.number="form.slot_hour" type="number" min="0" max="23" class="adm-input" />
-            </label>
-          </div>
+          <label>
+            <span class="field-label">Nome do time</span>
+            <input v-model="form.name" type="text" required class="adm-input" placeholder="Rachão da Terça" />
+          </label>
+          <label>
+            <span class="field-label">Horário (slot)</span>
+            <select v-model.number="form.slot_id" required class="adm-select">
+              <option value="" disabled>Selecione um horário</option>
+              <option v-for="s in slots" :key="s.id" :value="s.id">
+                {{ WEEKDAYS[s.weekday] }} {{ String(s.start_hour).padStart(2,'0') }}:{{ String(s.start_minute ?? 0).padStart(2,'0') }}{{ s.label ? ' — ' + s.label : '' }}
+              </option>
+            </select>
+          </label>
           <div class="adm-form-row">
             <label>
               <span class="field-label">Login</span>
@@ -148,26 +135,50 @@ onMounted(load)
       Nenhum grupo cadastrado.
     </div>
 
-    <div v-else class="adm-table-wrap">
-      <table class="adm-table">
-        <thead>
-          <tr>
-            <th>Time</th><th>Login</th><th>Câmera</th><th>Slot</th><th>Assinatura</th><th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="g in groups" :key="g.id">
-            <td><strong>{{ g.name }}</strong></td>
-            <td><span class="mono">{{ g.login }}</span></td>
-            <td><span class="mono">{{ g.camera_id }}</span></td>
-            <td>{{ WEEKDAYS[g.slot_weekday] }} {{ String(g.slot_hour).padStart(2,'0') }}:00</td>
-            <td>
-              <span :class="['exp-badge', isExpired(g.subscription_expires_at) ? 'urgent' : '']">
-                <span class="exp-dot" />
-                {{ new Date(g.subscription_expires_at).toLocaleDateString('pt-BR') }}
-              </span>
-            </td>
-            <td class="adm-actions-cell">
+    <template v-else>
+      <!-- Tabela (desktop) -->
+      <div class="adm-table-wrap">
+        <table class="adm-table">
+          <thead>
+            <tr>
+              <th>Time</th><th>Login</th><th>Horário</th><th>Assinatura</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="g in groups" :key="g.id">
+              <td><strong>{{ g.name }}</strong></td>
+              <td><span class="mono">{{ g.login }}</span></td>
+              <td>{{ WEEKDAYS[g.weekday] }} {{ String(g.start_hour).padStart(2,'0') }}:{{ String(g.start_minute ?? 0).padStart(2,'0') }}{{ g.slot_label ? ' — ' + g.slot_label : '' }}</td>
+              <td>
+                <span :class="['exp-badge', isExpired(g.subscription_expires_at) ? 'urgent' : '']">
+                  <span class="exp-dot" />
+                  {{ new Date(g.subscription_expires_at).toLocaleDateString('pt-BR') }}
+                </span>
+              </td>
+              <td class="adm-actions-cell">
+                <button class="adm-icon-btn" @click="openEdit(g)" title="Editar">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                </button>
+                <button class="adm-icon-btn danger" @click="remove(g.id)" title="Remover">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>
+                  </svg>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Cards (mobile) -->
+      <div class="adm-cards">
+        <div v-for="g in groups" :key="g.id" class="adm-card">
+          <div class="adm-card-top">
+            <strong class="adm-card-name">{{ g.name }}</strong>
+            <div class="adm-card-actions">
               <button class="adm-icon-btn" @click="openEdit(g)" title="Editar">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -179,11 +190,25 @@ onMounted(load)
                   <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>
                 </svg>
               </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+            </div>
+          </div>
+          <div class="adm-card-meta">
+            <span class="adm-card-chip">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+              {{ g.login }}
+            </span>
+            <span class="adm-card-chip">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+              {{ WEEKDAYS[g.weekday] }} {{ String(g.start_hour).padStart(2,'0') }}:{{ String(g.start_minute ?? 0).padStart(2,'0') }}
+            </span>
+          </div>
+          <div :class="['adm-card-exp', isExpired(g.subscription_expires_at) ? 'urgent' : 'ok']">
+            <span class="exp-dot" />
+            Assinatura até {{ new Date(g.subscription_expires_at).toLocaleDateString('pt-BR') }}
+          </div>
+        </div>
+      </div>
+    </template>
   </div>
 </template>
 
@@ -216,4 +241,50 @@ onMounted(load)
 .adm-icon-btn:hover { background: rgba(11,19,43,0.06); }
 .adm-icon-btn.danger { color: #9b1c14; }
 .adm-icon-btn.danger:hover { background: rgba(255,59,48,0.1); }
+
+.exp-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
+.exp-dot { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; display: inline-block; }
+.exp-badge.urgent .exp-dot { background: #ef4444; }
+
+/* Cards — ocultos no desktop */
+.adm-cards { display: none; }
+
+@media (max-width: 768px) {
+  .adm-page-header { flex-direction: column; gap: 14px; align-items: flex-start; margin-bottom: 20px; }
+  .adm-title { font-size: 24px; }
+  .adm-modal { padding: 24px; }
+  .adm-form-row { grid-template-columns: 1fr; }
+
+  .adm-table-wrap { display: none; }
+
+  .adm-cards { display: flex; flex-direction: column; gap: 10px; }
+
+  .adm-card {
+    background: white; border-radius: 14px;
+    border: 1px solid rgba(11,19,43,0.08);
+    padding: 16px 18px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .adm-card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .adm-card-name { font-size: 16px; color: var(--navy); }
+  .adm-card-actions { display: flex; gap: 4px; flex-shrink: 0; }
+
+  .adm-card-meta { display: flex; flex-wrap: wrap; gap: 6px; }
+  .adm-card-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 12px; color: var(--muted);
+    background: rgba(11,19,43,0.05); border-radius: 99px;
+    padding: 4px 10px;
+  }
+
+  .adm-card-exp {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 12px; padding: 6px 10px; border-radius: 8px;
+  }
+  .adm-card-exp.ok { background: rgba(34,197,94,0.08); color: #166534; }
+  .adm-card-exp.urgent { background: rgba(239,68,68,0.08); color: #991b1b; }
+  .adm-card-exp .exp-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .adm-card-exp.ok .exp-dot { background: #22c55e; }
+  .adm-card-exp.urgent .exp-dot { background: #ef4444; }
+}
 </style>

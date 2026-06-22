@@ -55,6 +55,16 @@ body {
   color: rgba(247,244,237,0.6); margin-top: 6px;
 }
 .topbar-spacer { flex: 1; }
+.topbar-cta {
+  display: inline-flex; align-items: center;
+  padding: 8px 18px; border-radius: 999px;
+  background: var(--gold); color: var(--navy-deep);
+  font-family: 'Archivo Black', sans-serif; font-size: 12px;
+  letter-spacing: 0.08em; text-transform: uppercase; text-decoration: none;
+  transition: background 0.15s, transform 0.15s;
+  white-space: nowrap;
+}
+.topbar-cta:hover { background: var(--gold-deep); transform: translateY(-1px); }
 .live-pill {
   display: inline-flex; align-items: center; gap: 8px;
   background: rgba(255,255,255,0.06);
@@ -145,6 +155,19 @@ body {
 }
 .hero-warn svg { width: 20px; height: 20px; color: var(--gold); flex-shrink: 0; }
 .hero-warn strong { color: var(--gold); font-weight: 700; }
+.hero-subscribe {
+  margin-top: 20px; padding-top: 20px;
+  border-top: 1px solid rgba(247,244,237,0.1);
+  display: flex; flex-direction: column; gap: 10px;
+}
+.hero-subscribe-label {
+  font-size: 13px; color: rgba(247,244,237,0.65); line-height: 1.5; margin: 0;
+}
+.hero-login-link {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.12em;
+  color: rgba(247,244,237,0.5); text-decoration: none; transition: color 0.15s;
+}
+.hero-login-link:hover { color: var(--gold); }
 
 /* ── Controls bar ──────────────────────────────────────────── */
 .controls-wrap {
@@ -360,6 +383,7 @@ body {
 
 /* ── Player page ───────────────────────────────────────────── */
 .player-wrap {
+  flex: 1;
   max-width: 1280px; margin: 0 auto;
   padding: 40px 32px 80px;
   display: grid; grid-template-columns: 1fr 360px;
@@ -470,6 +494,8 @@ h1.video-title {
   transition: background 0.15s; cursor: pointer;
 }
 .side-clip:hover { background: rgba(11,19,43,0.04); }
+.side-clip-locked { cursor: default; opacity: 0.65; }
+.side-clip-locked:hover { background: none; }
 .side-thumb {
   aspect-ratio: 16/9; border-radius: 6px;
   position: relative; overflow: hidden; background: var(--navy);
@@ -482,6 +508,12 @@ h1.video-title {
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px; padding: 2px 4px; border-radius: 3px;
 }
+.side-lock {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(7,21,58,0.55); color: rgba(255,255,255,0.7);
+}
+.side-buy-hint { color: var(--gold); }
 .side-info .t {
   font-family: 'Archivo Black', sans-serif;
   font-size: 13px; line-height: 1.2;
@@ -508,3 +540,95 @@ h1.video-title {
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 .toast .gold { color: var(--gold); }
+
+/* ── Mobile responsive (max-width: 640px) ──────────────────── */
+@media (max-width: 640px) {
+  /* Topbar */
+  .topbar-inner {
+    padding: 12px 16px;
+    gap: 10px;
+  }
+  .brand-logo {
+    width: 40px; height: 40px;
+  }
+  .brand-name {
+    font-size: 16px;
+  }
+  .brand-sub {
+    font-size: 9px; margin-top: 4px;
+  }
+  .top-contact { display: none; }
+  .live-label { display: none; }
+  .live-pill {
+    padding: 7px 10px;
+  }
+
+  /* Hero */
+  .hero-inner {
+    padding: 36px 16px 48px;
+    gap: 24px;
+  }
+  .hero h1 {
+    font-size: clamp(36px, 10vw, 56px);
+  }
+  .hero h1 .outline {
+    -webkit-text-stroke: 1.5px var(--paper);
+  }
+  .hero-tag { font-size: 13px; }
+  .hero-warn { font-size: 12px; }
+
+  /* Main content */
+  .main-wrap {
+    padding: 28px 16px 80px;
+  }
+
+  /* Controls bar */
+  .controls {
+    padding: 12px 16px;
+    gap: 12px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Grid */
+  .grid {
+    gap: 20px 16px;
+  }
+
+  /* Player */
+  .player-wrap {
+    padding: 24px 16px 80px;
+  }
+
+  /* Footer */
+  .site-footer {
+    padding: 32px 16px;
+  }
+
+  /* Player page */
+  .expire-banner {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .expire-banner .countdown {
+    margin-left: 0;
+    width: 100%;
+    text-align: center;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+  .actions .btn {
+    justify-content: center;
+    width: 100%;
+  }
+
+  /* Back link touch target */
+  .back-link {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+}
